@@ -159,6 +159,14 @@ function startApp() {
   $("series-form").addEventListener("submit", saveSeriesForm);
   $("btn-clear-series").addEventListener("click", clearSeriesForm);
 
+  // Bind-up toggle shows/hides the relevant fields
+  $("series-bindup").addEventListener("change", () => {
+    const isBindup = $("series-bindup").checked;
+    $("single-book-fields").classList.toggle("hidden",  isBindup);
+    $("bindup-fields").classList.toggle("hidden",       !isBindup);
+    $("bindup-total-field").classList.toggle("hidden",  !isBindup);
+  });
+
   renderHome();
 }
 
@@ -200,8 +208,7 @@ async function lookupIsbn(isbn) {
   try {
     const existing = await getBookByIsbn(isbn);
     if (existing) {
-      toast("Already in your collection! 📚");
-      renderPreview(existing, true);
+      renderDuplicate(existing);
       return;
     }
     const book = await fetchBookByIsbn(isbn);
@@ -210,6 +217,43 @@ async function lookupIsbn(isbn) {
   } catch (e) {
     preview.innerHTML = `<p class="empty-msg" style="padding:24px">❌ ${e.message}</p>`;
   }
+}
+
+function renderDuplicate(book) {
+  const preview = $("book-preview");
+  const cover   = coverImg(book.coverUrl, "duplicate-cover");
+  const series  = book.seriesName
+    ? `<span class="duplicate-series">${esc(book.seriesName)}${book.seriesNumber ? ` #${book.seriesNumber}` : ""}${book.isBindup ? " (bind-up)" : ""}</span>`
+    : "";
+
+  preview.innerHTML = `
+    <div class="duplicate-card">
+      <div class="duplicate-banner">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        Already in your collection
+      </div>
+      <div class="duplicate-inner">
+        <div class="duplicate-cover">${cover}</div>
+        <div class="duplicate-info">
+          <div class="duplicate-title">${esc(book.title)}</div>
+          <div class="duplicate-author">${esc((book.authors || []).join(", ") || "Unknown")}</div>
+          ${series}
+        </div>
+      </div>
+      <button class="btn-primary" id="dup-view-btn">View in Collection</button>
+    </div>
+  `;
+
+  $("dup-view-btn").addEventListener("click", () => {
+    $("book-preview").classList.add("hidden");
+    $("isbn-input").value = "";
+    navigateTo("collection");
+    // Brief highlight after navigation
+    setTimeout(() => {
+      const card = document.querySelector(`.book-card[data-id="${book.id}"]`);
+      if (card) { card.scrollIntoView({ behavior: "smooth", block: "center" }); card.style.outline = "2px solid var(--primary)"; setTimeout(() => card.style.outline = "", 1500); }
+    }, 150);
+  });
 }
 
 function renderPreview(book, alreadyOwned) {
@@ -303,10 +347,21 @@ function buildSeriesMap() {
   const map = new Map();
   for (const book of allBooks) {
     if (!book.seriesName) continue;
-    if (!map.has(book.seriesName)) map.set(book.seriesName, { total: 0, owned: new Set(), books: [] });
+    if (!map.has(book.seriesName)) {
+      map.set(book.seriesName, { total: 0, owned: new Set(), bindups: [], books: [] });
+    }
     const s = map.get(book.seriesName);
-    if (book.seriesNumber) s.owned.add(book.seriesNumber);
-    if (book.seriesTotal && book.seriesTotal > s.total) s.total = book.seriesTotal;
+
+    if (book.isBindup && book.bindupFrom && book.bindupTo) {
+      // Expand bind-up range into owned set, track as a bindup entry for display
+      for (let n = book.bindupFrom; n <= book.bindupTo; n++) s.owned.add(n);
+      s.bindups.push({ from: book.bindupFrom, to: book.bindupTo, bookId: book.id, title: book.title });
+    } else if (book.seriesNumber) {
+      s.owned.add(book.seriesNumber);
+    }
+
+    const total = book.isBindup ? (book.seriesTotal || 0) : (book.seriesTotal || 0);
+    if (total > s.total) s.total = total;
     s.books.push(book);
   }
   return map;
@@ -381,21 +436,34 @@ function renderSeries() {
     const owned  = info.owned;
     const pct    = total > 0 ? Math.round((owned.size / total) * 100) : 100;
 
-    // Numbered chips
+    // Track which numbers are covered by a bind-up (for chip rendering)
+    const bindupCoverage = new Map(); // num → bindup entry
+    for (const bu of (info.bindups || [])) {
+      for (let n = bu.from; n <= bu.to; n++) bindupCoverage.set(n, bu);
+    }
+
     let chips = "";
+    let skipUntil = 0;
     if (total > 0) {
       for (let i = 1; i <= total; i++) {
-        const book = info.books.find(b => b.seriesNumber === i);
-        if (book) {
-          chips += `<span class="series-chip chip-owned" data-id="${book.id}" title="${esc(book.title)}">#${i} ✓</span>`;
+        if (i <= skipUntil) continue; // already merged into a bind-up chip
+
+        const bu = bindupCoverage.get(i);
+        if (bu && i === bu.from) {
+          // Render the bind-up as a single merged chip
+          chips += `<span class="series-chip chip-bindup" data-id="${bu.bookId}" title="${esc(bu.title)}">#${bu.from}–${bu.to} bind-up</span>`;
+          skipUntil = bu.to;
+        } else if (owned.has(i)) {
+          const book = info.books.find(b => b.seriesNumber === i);
+          chips += `<span class="series-chip chip-owned" data-id="${book?.id || ""}" title="${esc(book?.title || "")}">#${i} ✓</span>`;
         } else {
-          chips += `<span class="series-chip chip-missing" title="Missing">#${i} ✗</span>`;
+          chips += `<span class="series-chip chip-missing" title="Missing #${i}">#${i} ✗</span>`;
         }
       }
     }
-    // Books without a series number
-    info.books.filter(b => !b.seriesNumber).forEach(b => {
-      chips += `<span class="series-chip chip-owned" data-id="${b.id}" title="${esc(b.title)}">📚 ?</span>`;
+    // Books with no number set (and not a bind-up)
+    info.books.filter(b => !b.seriesNumber && !b.isBindup).forEach(b => {
+      chips += `<span class="series-chip chip-owned" data-id="${b.id}" title="${esc(b.title)}">? ✓</span>`;
     });
 
     const missingCount = total > 0 ? total - owned.size : 0;
@@ -564,24 +632,45 @@ function openBookModal(bookId) {
 
 // ─── Series modal ────────────────────────────────────────────────────────────
 function openSeriesModal(bookId, book) {
+  const isBindup = book?.isBindup || false;
   $("series-book-id").value     = bookId || "";
   $("series-name-input").value  = book?.seriesName   || "";
+  $("series-bindup").checked    = isBindup;
   $("series-num-input").value   = book?.seriesNumber || "";
   $("series-total-input").value = book?.seriesTotal  || "";
+  $("bindup-from").value        = book?.bindupFrom   || "";
+  $("bindup-to").value          = book?.bindupTo     || "";
+  $("bindup-total").value       = book?.seriesTotal  || "";
+
+  // Show/hide fields based on bind-up state
+  $("single-book-fields").classList.toggle("hidden",  isBindup);
+  $("bindup-fields").classList.toggle("hidden",       !isBindup);
+  $("bindup-total-field").classList.toggle("hidden",  !isBindup);
+
   $("series-modal").classList.remove("hidden");
 }
 
 async function saveSeriesForm(e) {
   e.preventDefault();
-  const bookId      = $("series-book-id").value;
-  const seriesName  = $("series-name-input").value.trim()      || null;
-  const seriesNumber= parseInt($("series-num-input").value)    || null;
-  const seriesTotal = parseInt($("series-total-input").value)  || null;
-  const updates     = { seriesName, seriesNumber, seriesTotal };
+  const bookId    = $("series-book-id").value;
+  const seriesName= $("series-name-input").value.trim() || null;
+  const isBindup  = $("series-bindup").checked;
+
+  let updates;
+  if (isBindup) {
+    const bindupFrom  = parseInt($("bindup-from").value)  || null;
+    const bindupTo    = parseInt($("bindup-to").value)    || null;
+    const seriesTotal = parseInt($("bindup-total").value) || null;
+    updates = { seriesName, isBindup: true, bindupFrom, bindupTo, seriesTotal, seriesNumber: null };
+  } else {
+    const seriesNumber= parseInt($("series-num-input").value)   || null;
+    const seriesTotal = parseInt($("series-total-input").value) || null;
+    updates = { seriesName, isBindup: false, bindupFrom: null, bindupTo: null, seriesNumber, seriesTotal };
+  }
 
   if (bookId) {
     await updateBook(bookId, updates);
-    toast("✅ Series info updated!");
+    toast("Series info saved!");
   } else if (previewBook) {
     Object.assign(previewBook, updates);
     renderPreview(previewBook, false);
@@ -591,13 +680,12 @@ async function saveSeriesForm(e) {
 
 async function clearSeriesForm() {
   const bookId = $("series-book-id").value;
+  const cleared = { seriesName: null, seriesNumber: null, seriesTotal: null, isBindup: false, bindupFrom: null, bindupTo: null };
   if (bookId) {
-    await updateBook(bookId, { seriesName: null, seriesNumber: null, seriesTotal: null });
+    await updateBook(bookId, cleared);
     toast("Series info cleared.");
   } else if (previewBook) {
-    previewBook.seriesName = null;
-    previewBook.seriesNumber = null;
-    previewBook.seriesTotal = null;
+    Object.assign(previewBook, cleared);
     renderPreview(previewBook, false);
   }
   closeAllModals();

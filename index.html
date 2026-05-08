@@ -196,23 +196,51 @@
         <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
       <h3 class="modal-heading">Edit Series Info</h3>
-      <p class="modal-subtext">Set the series name, which book number this is, and the total so missing books can be tracked.</p>
+      <p class="modal-subtext">Set the series name and book number so this appears in the Series tracker. Use the bind-up toggle if this volume contains more than one book.</p>
       <form id="series-form">
         <input type="hidden" id="series-book-id">
+
         <div class="field">
           <label>Series Name</label>
-          <input type="text" id="series-name-input" placeholder="e.g. Harry Potter">
+          <input type="text" id="series-name-input" placeholder="e.g. The Calhoun Women">
         </div>
-        <div class="field-row">
+
+        <!-- Bind-up toggle -->
+        <div class="field">
+          <label class="toggle-label">
+            <input type="checkbox" id="series-bindup">
+            <span class="toggle-text">This is a bind-up / omnibus (contains multiple books)</span>
+          </label>
+        </div>
+
+        <!-- Single book number (hidden when bind-up checked) -->
+        <div id="single-book-fields" class="field-row">
           <div class="field">
             <label>Book #</label>
             <input type="number" id="series-num-input" placeholder="1" min="1" max="999">
           </div>
           <div class="field">
             <label>Total in Series</label>
-            <input type="number" id="series-total-input" placeholder="7" min="1" max="999">
+            <input type="number" id="series-total-input" placeholder="5" min="1" max="999">
           </div>
         </div>
+
+        <!-- Bind-up range (shown when bind-up checked) -->
+        <div id="bindup-fields" class="field-row hidden">
+          <div class="field">
+            <label>Covers books # from</label>
+            <input type="number" id="bindup-from" placeholder="4" min="1" max="999">
+          </div>
+          <div class="field">
+            <label>to #</label>
+            <input type="number" id="bindup-to" placeholder="5" min="1" max="999">
+          </div>
+        </div>
+        <div id="bindup-total-field" class="field hidden">
+          <label>Total books in series</label>
+          <input type="number" id="bindup-total" placeholder="5" min="1" max="999">
+        </div>
+
         <button type="submit" class="btn-primary">Save</button>
         <button type="button" class="btn-ghost" id="btn-clear-series">Clear series info</button>
       </form>
