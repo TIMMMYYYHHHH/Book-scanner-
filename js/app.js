@@ -5,6 +5,10 @@ import { initDb, addBook, updateBook, deleteBook, getBookByIsbn, subscribeToBook
 import { fetchBookByIsbn }     from "./api.js";
 import { createScanner }       from "./scanner.js";
 
+// ─── DOM helpers (must be first — used throughout this module) ────────────────
+const $  = (id)  => document.getElementById(id);
+const $$ = (sel) => document.querySelectorAll(sel);
+
 // ─── Init ────────────────────────────────────────────────────────────────────
 const fbApp = initializeApp(firebaseConfig);
 initAuth(fbApp);
@@ -609,6 +613,3 @@ function friendlyError(code) {
     "auth/invalid-credential":   "Incorrect email or password.",
   }[code] ?? "Something went wrong. Please try again.";
 }
-
-const $  = (id)  => document.getElementById(id);
-const $$ = (sel) => document.querySelectorAll(sel);
