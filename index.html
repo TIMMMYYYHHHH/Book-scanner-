@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#2c1a10">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>My Library</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ===== AUTH SCREEN ===== -->
+  <div id="auth-screen">
+    <div class="auth-card">
+      <div class="auth-logo">📚</div>
+      <h1 class="auth-title">My Library</h1>
+      <p class="auth-subtitle">Your personal book collection</p>
+
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="signin">Sign In</button>
+        <button class="auth-tab" data-tab="signup">Create Account</button>
+      </div>
+
+      <form id="auth-form">
+        <div class="field">
+          <label for="auth-email">Email</label>
+          <input type="email" id="auth-email" placeholder="your@email.com" autocomplete="email" required>
+        </div>
+        <div class="field">
+          <label for="auth-password">Password</label>
+          <input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="btn-primary" id="auth-btn">Sign In</button>
+      </form>
+
+      <p id="auth-error" class="auth-error"></p>
+    </div>
+  </div>
+
+  <!-- ===== APP SCREEN ===== -->
+  <div id="app-screen" class="hidden">
+
+    <header id="top-bar">
+      <h1 id="page-title">My Library</h1>
+      <button id="signout-btn" class="icon-btn" title="Sign Out">⎋</button>
+    </header>
+
+    <main id="content">
+
+      <!-- HOME -->
+      <section id="view-home" class="view">
+        <div class="stats-row">
+          <div class="stat-card">
+            <span class="stat-n" id="stat-books">0</span>
+            <span class="stat-l">Books</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-n" id="stat-series">0</span>
+            <span class="stat-l">Series</span>
+          </div>
+          <div class="stat-card missing-stat">
+            <span class="stat-n" id="stat-missing">0</span>
+            <span class="stat-l">Missing</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-n" id="stat-authors">0</span>
+            <span class="stat-l">Authors</span>
+          </div>
+        </div>
+        <h2 class="section-title">Recently Added</h2>
+        <div id="recent-grid" class="book-grid"></div>
+      </section>
+
+      <!-- SCAN -->
+      <section id="view-scan" class="view hidden">
+        <div id="scan-area">
+          <div id="reader"></div>
+          <div class="scan-controls">
+            <button id="btn-start-scan" class="btn-primary">📷 Start Camera</button>
+            <button id="btn-stop-scan" class="btn-secondary hidden">Stop Camera</button>
+          </div>
+        </div>
+        <div class="or-divider"><span>or enter ISBN manually</span></div>
+        <div class="manual-isbn">
+          <input type="text" id="isbn-input" placeholder="e.g. 9780439023480" inputmode="numeric">
+          <button id="btn-lookup" class="btn-primary">Look Up</button>
+        </div>
+        <div id="book-preview" class="hidden"></div>
+      </section>
+
+      <!-- COLLECTION -->
+      <section id="view-collection" class="view hidden">
+        <div class="toolbar">
+          <input type="search" id="collection-search" placeholder="Search by title or author…">
+          <select id="collection-sort">
+            <option value="added-desc">Recently Added</option>
+            <option value="title">Title A–Z</option>
+            <option value="author">Author A–Z</option>
+            <option value="series">Series</option>
+          </select>
+        </div>
+        <div id="collection-grid" class="book-grid"></div>
+        <p id="collection-empty" class="empty-msg hidden">No books yet — go scan some! 📚</p>
+      </section>
+
+      <!-- SERIES -->
+      <section id="view-series" class="view hidden">
+        <div id="series-list"></div>
+        <p id="series-empty" class="empty-msg hidden">No series tracked yet.<br>Add books that belong to a series and set their series info to get started!</p>
+      </section>
+
+      <!-- AUTHORS -->
+      <section id="view-authors" class="view hidden">
+        <div id="authors-list"></div>
+        <p id="authors-empty" class="empty-msg hidden">No books added yet.</p>
+      </section>
+
+    </main>
+
+    <nav id="bottom-nav">
+      <button class="nav-btn active" data-view="home">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Home</span>
+      </button>
+      <button class="nav-btn" data-view="scan">
+        <span class="nav-icon">📷</span>
+        <span class="nav-label">Scan</span>
+      </button>
+      <button class="nav-btn" data-view="collection">
+        <span class="nav-icon">📚</span>
+        <span class="nav-label">Books</span>
+      </button>
+      <button class="nav-btn" data-view="series">
+        <span class="nav-icon">📖</span>
+        <span class="nav-label">Series</span>
+      </button>
+      <button class="nav-btn" data-view="authors">
+        <span class="nav-icon">✍️</span>
+        <span class="nav-label">Authors</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- ===== BOOK DETAIL MODAL ===== -->
+  <div id="book-modal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-overlay"></div>
+    <div class="modal-box">
+      <button class="modal-close" aria-label="Close">✕</button>
+      <div id="modal-content"></div>
+    </div>
+  </div>
+
+  <!-- ===== SERIES EDIT MODAL ===== -->
+  <div id="series-modal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-overlay"></div>
+    <div class="modal-box modal-small">
+      <button class="modal-close" aria-label="Close">✕</button>
+      <h3 class="modal-heading">Edit Series Info</h3>
+      <p class="modal-subtext">Set the series name, which book number this is, and the total number of books in the series so missing books can be tracked.</p>
+      <form id="series-form">
+        <input type="hidden" id="series-book-id">
+        <div class="field">
+          <label>Series Name</label>
+          <input type="text" id="series-name-input" placeholder="e.g. Harry Potter">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Book #</label>
+            <input type="number" id="series-num-input" placeholder="1" min="1" max="999">
+          </div>
+          <div class="field">
+            <label>Total in Series</label>
+            <input type="number" id="series-total-input" placeholder="7" min="1" max="999">
+          </div>
+        </div>
+        <button type="submit" class="btn-primary">Save</button>
+        <button type="button" class="btn-clear-series">Clear Series Info</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== TOAST ===== -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
