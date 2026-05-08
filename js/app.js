@@ -36,15 +36,41 @@ $$(".auth-tab").forEach(tab =>
     authMode = tab.dataset.tab;
     authBtn.textContent = authMode === "signin" ? "Sign In" : "Create Account";
     authError.textContent = "";
+    $("confirm-pw-field").classList.toggle("hidden", authMode === "signin");
+    $("auth-confirm").required = authMode === "signup";
   })
 );
 
+// Password show/hide toggles
+$$(".pw-toggle").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const input = $(btn.dataset.target);
+    const isHidden = input.type === "password";
+    input.type = isHidden ? "text" : "password";
+    btn.querySelector(".eye-open").classList.toggle("hidden",  isHidden);
+    btn.querySelector(".eye-shut").classList.toggle("hidden", !isHidden);
+  });
+});
+
 authForm.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const email = $("auth-email").value.trim();
-  const pw    = $("auth-password").value;
-  authBtn.disabled = true;
+  const email   = $("auth-email").value.trim();
+  const pw      = $("auth-password").value;
+  const confirm = $("auth-confirm").value;
   authError.textContent = "";
+
+  if (authMode === "signup") {
+    if (pw.length < 6) {
+      authError.textContent = "Password must be at least 6 characters.";
+      return;
+    }
+    if (pw !== confirm) {
+      authError.textContent = "Passwords don't match — please check and try again.";
+      return;
+    }
+  }
+
+  authBtn.disabled = true;
   try {
     authMode === "signin" ? await signIn(email, pw) : await signUp(email, pw);
   } catch (err) {
@@ -131,7 +157,7 @@ function startApp() {
 
   // Series form
   $("series-form").addEventListener("submit", saveSeriesForm);
-  $("series-form").querySelector(".btn-clear-series").addEventListener("click", clearSeriesForm);
+  $("btn-clear-series").addEventListener("click", clearSeriesForm);
 
   renderHome();
 }
@@ -192,12 +218,19 @@ function renderPreview(book, alreadyOwned) {
   const coverHtml = coverImg(book.coverUrl, "preview-cover");
 
   const seriesHtml = book.seriesName
-    ? `<div class="preview-series">📖 <strong>${esc(book.seriesName)}</strong>${book.seriesNumber ? ` — Book #${book.seriesNumber}` : ""}</div>`
-    : "";
+    ? `<div class="preview-series">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;flex-shrink:0"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        <strong>${esc(book.seriesName)}</strong>${book.seriesNumber ? ` — Book #${book.seriesNumber}` : ""}
+       </div>`
+    : `<div class="preview-no-series">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        No series info found —
+        <button id="preview-series-inline-btn">set it manually</button>
+       </div>`;
 
   const actionBtn = alreadyOwned
-    ? `<button class="btn-secondary" id="preview-view-btn">View in Collection</button>`
-    : `<button class="btn-primary"   id="preview-add-btn">Add to Collection ✓</button>`;
+    ? `<button class="btn-outline" id="preview-view-btn">View in Collection</button>`
+    : `<button class="btn-primary" id="preview-add-btn">Add to Collection</button>`;
 
   preview.innerHTML = `
     <div class="preview-inner">
@@ -206,7 +239,7 @@ function renderPreview(book, alreadyOwned) {
         <div class="preview-title">${esc(book.title)}</div>
         <div class="preview-author">${esc((book.authors || []).join(", ") || "Unknown Author")}</div>
         <div class="preview-meta">
-          ${book.publisher  ? esc(book.publisher)  + "<br>" : ""}
+          ${book.publisher  ? esc(book.publisher) + "<br>" : ""}
           ${book.publishYear ? "Published: " + book.publishYear : ""}
           ${book.pages       ? " · " + book.pages + " pages" : ""}
         </div>
@@ -215,7 +248,7 @@ function renderPreview(book, alreadyOwned) {
     ${seriesHtml}
     <div class="preview-actions">
       ${actionBtn}
-      <button class="btn-secondary" id="preview-series-btn">✏️ Series</button>
+      <button class="btn-outline" id="preview-series-btn">Edit Series</button>
     </div>
   `;
 
@@ -228,6 +261,7 @@ function renderPreview(book, alreadyOwned) {
     $("preview-add-btn")?.addEventListener("click", addPreviewBook);
   }
   $("preview-series-btn")?.addEventListener("click", () => openSeriesModal(null, book));
+  $("preview-series-inline-btn")?.addEventListener("click", () => openSeriesModal(null, book));
 }
 
 async function addPreviewBook() {

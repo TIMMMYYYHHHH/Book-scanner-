@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#2c1a10">
+  <meta name="theme-color" content="#09090b">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>My Library</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -19,22 +19,41 @@
     <div class="auth-card">
       <div class="auth-logo">📚</div>
       <h1 class="auth-title">My Library</h1>
-      <p class="auth-subtitle">Your personal book collection</p>
+      <p class="auth-subtitle">Track your book collection</p>
 
       <div class="auth-tabs">
         <button class="auth-tab active" data-tab="signin">Sign In</button>
         <button class="auth-tab" data-tab="signup">Create Account</button>
       </div>
 
-      <form id="auth-form">
+      <form id="auth-form" novalidate>
         <div class="field">
           <label for="auth-email">Email</label>
-          <input type="email" id="auth-email" placeholder="your@email.com" autocomplete="email" required>
+          <input type="email" id="auth-email" placeholder="you@example.com" autocomplete="email" required>
         </div>
+
         <div class="field">
           <label for="auth-password">Password</label>
-          <input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" required>
+          <div class="input-wrap">
+            <input type="password" id="auth-password" placeholder="Password" autocomplete="current-password" required>
+            <button type="button" class="pw-toggle" data-target="auth-password" aria-label="Show password">
+              <svg class="eye-open"  viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg class="eye-shut hidden" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            </button>
+          </div>
         </div>
+
+        <div class="field hidden" id="confirm-pw-field">
+          <label for="auth-confirm">Confirm Password</label>
+          <div class="input-wrap">
+            <input type="password" id="auth-confirm" placeholder="Re-enter password" autocomplete="new-password">
+            <button type="button" class="pw-toggle" data-target="auth-confirm" aria-label="Show password">
+              <svg class="eye-open"  viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg class="eye-shut hidden" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            </button>
+          </div>
+        </div>
+
         <button type="submit" class="btn-primary" id="auth-btn">Sign In</button>
       </form>
 
@@ -46,8 +65,10 @@
   <div id="app-screen" class="hidden">
 
     <header id="top-bar">
-      <h1 id="page-title">My Library</h1>
-      <button id="signout-btn" class="icon-btn" title="Sign Out">⎋</button>
+      <span id="page-title">My Library</span>
+      <button id="signout-btn" class="icon-btn" title="Sign Out">
+        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
     </header>
 
     <main id="content">
@@ -81,37 +102,46 @@
         <div id="scan-area">
           <div id="reader"></div>
           <div class="scan-controls">
-            <button id="btn-start-scan" class="btn-primary">📷 Start Camera</button>
-            <button id="btn-stop-scan" class="btn-secondary hidden">Stop Camera</button>
+            <button id="btn-start-scan" class="btn-primary">
+              <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              Start Camera
+            </button>
+            <button id="btn-stop-scan" class="btn-outline hidden">Stop</button>
           </div>
         </div>
-        <div class="or-divider"><span>or enter ISBN manually</span></div>
+
+        <div class="or-divider"><span>or enter ISBN</span></div>
+
         <div class="manual-isbn">
           <input type="text" id="isbn-input" placeholder="e.g. 9780439023480" inputmode="numeric">
           <button id="btn-lookup" class="btn-primary">Look Up</button>
         </div>
+
         <div id="book-preview" class="hidden"></div>
       </section>
 
       <!-- COLLECTION -->
       <section id="view-collection" class="view hidden">
         <div class="toolbar">
-          <input type="search" id="collection-search" placeholder="Search by title or author…">
+          <div class="search-wrap">
+            <svg viewBox="0 0 24 24" class="search-icon"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="search" id="collection-search" placeholder="Search books…">
+          </div>
           <select id="collection-sort">
-            <option value="added-desc">Recently Added</option>
-            <option value="title">Title A–Z</option>
-            <option value="author">Author A–Z</option>
+            <option value="added-desc">Recent</option>
+            <option value="title">Title</option>
+            <option value="author">Author</option>
             <option value="series">Series</option>
           </select>
         </div>
         <div id="collection-grid" class="book-grid"></div>
-        <p id="collection-empty" class="empty-msg hidden">No books yet — go scan some! 📚</p>
+        <p id="collection-empty" class="empty-msg hidden">No books yet — go scan some!</p>
       </section>
 
       <!-- SERIES -->
       <section id="view-series" class="view hidden">
         <div id="series-list"></div>
-        <p id="series-empty" class="empty-msg hidden">No series tracked yet.<br>Add books that belong to a series and set their series info to get started!</p>
+        <p id="series-empty" class="empty-msg hidden">No series tracked yet.<br><span>Open any book and tap <strong>Edit Series Info</strong> to get started.</span></p>
       </section>
 
       <!-- AUTHORS -->
@@ -124,24 +154,24 @@
 
     <nav id="bottom-nav">
       <button class="nav-btn active" data-view="home">
-        <span class="nav-icon">🏠</span>
-        <span class="nav-label">Home</span>
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>Home</span>
       </button>
       <button class="nav-btn" data-view="scan">
-        <span class="nav-icon">📷</span>
-        <span class="nav-label">Scan</span>
+        <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        <span>Scan</span>
       </button>
       <button class="nav-btn" data-view="collection">
-        <span class="nav-icon">📚</span>
-        <span class="nav-label">Books</span>
+        <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        <span>Books</span>
       </button>
       <button class="nav-btn" data-view="series">
-        <span class="nav-icon">📖</span>
-        <span class="nav-label">Series</span>
+        <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        <span>Series</span>
       </button>
       <button class="nav-btn" data-view="authors">
-        <span class="nav-icon">✍️</span>
-        <span class="nav-label">Authors</span>
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Authors</span>
       </button>
     </nav>
 
@@ -151,7 +181,9 @@
   <div id="book-modal" class="modal hidden" role="dialog" aria-modal="true">
     <div class="modal-overlay"></div>
     <div class="modal-box">
-      <button class="modal-close" aria-label="Close">✕</button>
+      <button class="modal-close" aria-label="Close">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
       <div id="modal-content"></div>
     </div>
   </div>
@@ -159,10 +191,12 @@
   <!-- ===== SERIES EDIT MODAL ===== -->
   <div id="series-modal" class="modal hidden" role="dialog" aria-modal="true">
     <div class="modal-overlay"></div>
-    <div class="modal-box modal-small">
-      <button class="modal-close" aria-label="Close">✕</button>
+    <div class="modal-box">
+      <button class="modal-close" aria-label="Close">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
       <h3 class="modal-heading">Edit Series Info</h3>
-      <p class="modal-subtext">Set the series name, which book number this is, and the total number of books in the series so missing books can be tracked.</p>
+      <p class="modal-subtext">Set the series name, which book number this is, and the total so missing books can be tracked.</p>
       <form id="series-form">
         <input type="hidden" id="series-book-id">
         <div class="field">
@@ -180,7 +214,7 @@
           </div>
         </div>
         <button type="submit" class="btn-primary">Save</button>
-        <button type="button" class="btn-clear-series">Clear Series Info</button>
+        <button type="button" class="btn-ghost" id="btn-clear-series">Clear series info</button>
       </form>
     </div>
   </div>
